@@ -2,32 +2,86 @@
 #include <stdlib.h>
 #include <pthread.h> /* For working with POSIX threads*/
 #include <unistd.h> /* For pause() and sleep() */
+#include <time.h>
+
+#define GETTING_VALUES 1
+#define  __WAIT(x)   sleep(x);
 
 
+typedef struct 
+{
+    /* data */
+    float landitude;  // x direction
+    float longitude;  // y direction
+    time_t timestamp; // all  with respect to time
+}gps_data;
 
-void* fn(void* arg)
+static
+void* get_temperature_thread(void* arg)
 {  
-    char* input = (char*)arg;
-    while (1)
+    int* current_temperature = (int*)arg;
+    while (GETTING_VALUES)
     {
-        /* code */
-        printf("Input string = %s\n", input);
-        sleep(1);
+        /* printing updated temp values */
+        printf("Temperature Value = %d\n", current_temperature);
+        __WAIT(1)
     }
     
     return NULL;
 }
 
-
-void create_thread_1()
+static
+void* get_gps_data_thread(void* args)
 {
-    pthread_t pthread_1;
-    static char* thread_input1 = "I am thread no 1";
+      gps_data* _gps_data = (gps_data*)args;
+      
 
-    void *fn_ptr = fn;
+   
+      while(GETTING_VALUES)
+      {
+          // start to print the values
+           check_data:
+           if(_gps_data !=NULL)
+           {
+              printf("Landitude : %f\n", _gps_data->landitude);
+              printf("Logitude  : %f\n", _gps_data->longitude);
+              printf("Timestamp : %d\n", _gps_data->timestamp);
+              __WAIT(1)
+
+           }
+           else
+           {
+            printf("No GPS data found ...\n");
+            pthread_exit(0);
+            __WAIT(1)
+
+            //goto  check_data;
+           }
+      }
+
+      return NULL;
+}
+
+
+void main_thread()
+{
+
+    /* Threads ....*/
+    pthread_t temperature_thread;
+    pthread_t gps_thread;
+    
+    srand(time(NULL));
+    static int *current_temperature = 0;
+
+    void *get_temperature_thread_address = get_temperature_thread; // getting temp...
+
+    
+    static gps_data *location = NULL; //{.landitude =23.9, .longitude = 9.1, .timestamp = 1};
     
 
-    int rc = pthread_create(&pthread_1, NULL, (void*)fn_ptr, (void*)thread_input1);
+    int rc     = pthread_create(&temperature_thread, NULL, (void*)get_temperature_thread_address, (void*)current_temperature);
+    int gps_rc = pthread_create(&gps_thread, NULL, get_gps_data_thread , (void*)location);
+
     if(rc ==0)
     {
         printf("The thread 1 created succuss\n");
@@ -40,8 +94,8 @@ void create_thread_1()
 
 int main(int argc, char **argv)
 {
-    create_thread_1();
-    printf("main fn paused\n");
-    sleep(10);
+    main_thread();
+    
+    __WAIT(10)
     return 0;
 }
