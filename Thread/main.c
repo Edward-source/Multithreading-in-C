@@ -35,8 +35,6 @@ void* get_gps_data_thread(void* args)
 {
       gps_data* _gps_data = (gps_data*)args;
       
-
-   
       while(GETTING_VALUES)
       {
           // start to print the values
@@ -70,16 +68,12 @@ void main_thread()
     pthread_t temperature_thread;
     pthread_t gps_thread;
     
-    srand(time(NULL));
+    // setting data ...
     static int *current_temperature = 0;
-
-    void *get_temperature_thread_address = get_temperature_thread; // getting temp...
-
-    
     static gps_data *location = NULL; //{.landitude =23.9, .longitude = 9.1, .timestamp = 1};
     
-
-    int rc     = pthread_create(&temperature_thread, NULL, (void*)get_temperature_thread_address, (void*)current_temperature);
+    /* creation of threads */
+    int rc     = pthread_create(&temperature_thread, NULL, get_temperature_thread, (void*)current_temperature);
     int gps_rc = pthread_create(&gps_thread, NULL, get_gps_data_thread , (void*)location);
 
     if(rc ==0)
@@ -96,6 +90,7 @@ int main(int argc, char **argv)
 {
     main_thread();
     
-    __WAIT(10)
-    return 0;
+   // __WAIT(10)
+   pthread_exit(0);
+   return 0;
 }
